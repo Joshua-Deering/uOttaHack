@@ -8,6 +8,9 @@ QNX_TARGET=/home/joshuadeering/qnx800/target/qnx
 
 cd /home/joshuadeering/qnxprojects/uOttaHack/
 
-ntoaarch64-g++ -I$QNX_TARGET/usr/include -Igpio/aarch64/ \
-    -o uOttaHack uOttaHack.cpp \
+ntoaarch64-g++ \
+    -I$QNX_TARGET/usr/include \
+    -Igpio/aarch64/ \
+    -Irpi_i2c/public/ \
+    -o uOttaHack uOttaHack.cpp rpi_i2c/rpi_i2c.c \
     -L$QNX_TARGET/usr/lib -lc++ -lc
