@@ -80,9 +80,12 @@ int main() {
 
     // Initialize the LCD
     lcd_init();
-
     // Enable backlight
     LCD_BACKLIGHT = 0x08;
+
+    // Turn off LEDs
+    for (int led : leds)
+    writePin(led, false);
 
     // Display messages
     lcd_string("Press Any Button", LCD_LINE_1);
@@ -106,6 +109,10 @@ int main() {
     std::string input;
 
     int cur_level = 1;
+    int cur_stage = 1;
+    int cur_seq_delay = 600;
+    int cur_seq_length = 3;
+
     int lives = 3;
     while (true) {
         switch (game_state) {
@@ -128,30 +135,37 @@ int main() {
         case GameState::RUNNING:
             if (prevState == GameState::IDLE) {
                 cur_level = 1;
-                lives = 10;
-                lcd_string(("Level: " + std::to_string(cur_level)).c_str(), LCD_LINE_1);
-                lcd_string(("Lives: " + std::to_string(lives)).c_str(), LCD_LINE_2);
+                lives = 3;
+                lcd_string(("Level:" + std::to_string(cur_level) + "       " + std::to_string(cur_stage) + "/3").c_str(), LCD_LINE_1);
+                lcd_string(("Lives:" + std::to_string(lives)).c_str(), LCD_LINE_2);
             }
 
             sleep_millis(500);
             // generate and show sequence
-            auto rng = genSequence(cur_level / 3 + 3);
+            auto rng = genSequence(cur_seq_length);
             for (int i = 0; i < rng.size(); i++) {
                 writePin(leds[rng[i]], true);
-                sleep_millis(500);
+                sleep_millis(cur_seq_delay);
                 writePin(leds[rng[i]], false);
                 sleep_millis(100);
             }
 
-            cur_level++;
+            cur_stage++;
+            if (cur_stage == 4) {
+                cur_level++;
+                cur_stage = 1;
+                cur_seq_length++;
+                cur_seq_delay -= 50;
+                if (cur_seq_delay < 100) cur_seq_delay = 100;
+            }
             // get user input
             if (readSequence(rng)) {
                 writePin(success_led, true);
                 sleep_millis(2000);
                 writePin(success_led, false);
                 lcd_byte(0x01, LCD_CMD);  // Clear display
-                lcd_string(("Level: " + std::to_string(cur_level)).c_str(), LCD_LINE_1);
-                lcd_string(("Lives: " + std::to_string(lives)).c_str(), LCD_LINE_2);
+                lcd_string(("Level:" + std::to_string(cur_level) + "      " + std::to_string(cur_stage) + "/3").c_str(), LCD_LINE_1);
+                lcd_string(("Lives:" + std::to_string(lives)).c_str(), LCD_LINE_2);
             } else {
                 writePin(fail_led, true);
                 lives--;
@@ -163,16 +177,16 @@ int main() {
                 sleep_millis(1500);
                 writePin(fail_led, false);
 
-                lcd_string(("Level: " + std::to_string(cur_level)).c_str(), LCD_LINE_1);
-                lcd_string(("Lives: " + std::to_string(lives)).c_str(), LCD_LINE_2);
+                lcd_string(("Level:" + std::to_string(cur_level) + "      " + std::to_string(cur_stage) + "/3").c_str(), LCD_LINE_1);
+                lcd_string(("Lives:" + std::to_string(lives)).c_str(), LCD_LINE_2);
 
                 sleep_millis(1000);
 
                 if (lives == 0) {
                     lcd_byte(0x01, LCD_CMD);  // Clear display
                     lcd_string("You Lose!", LCD_LINE_1);
-                    lcd_string(("Level Reached: " + std::to_string(cur_level)).c_str(), LCD_LINE_2);
-                    sleep_millis(1500);
+                    lcd_string(("Level Reached:" + std::to_string(cur_level)).c_str(), LCD_LINE_2);
+                    sleep_millis(4000);
                     cur_level = 1;
                     lcd_byte(0x01, LCD_CMD);  // Clear display
                     game_state = GameState::IDLE;
