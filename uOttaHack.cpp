@@ -111,6 +111,7 @@ int main() {
     int cur_level = 1;
     int cur_stage = 1;
     int cur_seq_delay = 600;
+    int stress_lvl = 0;
     int cur_seq_length = 3;
 
     int lives = 3;
@@ -136,8 +137,8 @@ int main() {
             if (prevState == GameState::IDLE) {
                 cur_level = 1;
                 lives = 3;
-                lcd_string(("Level:" + std::to_string(cur_level) + "       " + std::to_string(cur_stage) + "/3").c_str(), LCD_LINE_1);
-                lcd_string(("Lives:" + std::to_string(lives)).c_str(), LCD_LINE_2);
+                lcd_string(("Level:" + std::to_string(cur_level) + "      " + std::to_string(cur_stage) + "/3").c_str(), LCD_LINE_1);
+                lcd_string(("Lives:" + std::to_string(lives) + " Stress:" + std::to_string(stress_lvl)).c_str(), LCD_LINE_2);
             }
 
             sleep_millis(500);
@@ -151,11 +152,12 @@ int main() {
             }
 
             cur_stage++;
+            stress_lvl = dist(gen) + 1;
+            cur_seq_delay = 500 + (2.5 - stress_lvl) * 100;
             if (cur_stage == 4) {
                 cur_level++;
                 cur_stage = 1;
                 cur_seq_length++;
-                cur_seq_delay -= 50;
                 if (cur_seq_delay < 100) cur_seq_delay = 100;
             }
             // get user input
@@ -165,7 +167,7 @@ int main() {
                 writePin(success_led, false);
                 lcd_byte(0x01, LCD_CMD);  // Clear display
                 lcd_string(("Level:" + std::to_string(cur_level) + "      " + std::to_string(cur_stage) + "/3").c_str(), LCD_LINE_1);
-                lcd_string(("Lives:" + std::to_string(lives)).c_str(), LCD_LINE_2);
+                lcd_string(("Lives:" + std::to_string(lives) + " Stress:" + std::to_string(stress_lvl)).c_str(), LCD_LINE_2);
             } else {
                 writePin(fail_led, true);
                 lives--;
@@ -178,7 +180,7 @@ int main() {
                 writePin(fail_led, false);
 
                 lcd_string(("Level:" + std::to_string(cur_level) + "      " + std::to_string(cur_stage) + "/3").c_str(), LCD_LINE_1);
-                lcd_string(("Lives:" + std::to_string(lives)).c_str(), LCD_LINE_2);
+                lcd_string(("Lives:" + std::to_string(lives) + " Stress:" + std::to_string(stress_lvl)).c_str(), LCD_LINE_2);
 
                 sleep_millis(1000);
 
